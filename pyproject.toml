@@ -1,0 +1,16 @@
+[project]
+name = "funcineforge"
+description = "Fun-CineForge: A Unified Dataset Pipeline and Model for Zero-Shot Movie Dubbingin Diverse Cinematic Scenes"
+version = "1.0.0"
+license = {file = "LICENSE"}
+dependencies = ["addict", "aiohttp", "anyio", "beartype", "click", "cryptography", "curl_cffi", "dashscope", "datasets", "#deepspeed==0.18.0", "einops", "face_alignment", "fastapi", "fastcluster", "ffmpy", "filelock", "funasr", "#gradio", "g4f", "hdbscan", "huggingface_hub", "imageio", "imageio-ffmpeg", "kaldiio", "joblib", "librosa", "matplotlib", "ml_collections", "modelscope", "moviepy", "numba", "numpy", "omegaconf", "onnx", "onnxruntime", "openai", "openai_whisper", "opencc_python_reimplemented", "opencv_python", "packaging", "pandas", "pillow", "propcache", "pyannote.audio", "pypinyin", "python_speech_features", "python-Levenshtein", "PyYAML", "Request", "rotary_embedding_torch", "scikit-learn", "scipy", "setuptools", "simplejson", "soundfile", "starlette", "tensorboardX", "torch", "torchaudio", "torchvision", "tqdm", "transformers", "x_transformers", "umap_learn"]
+
+[project.urls]
+Repository = "https://github.com/smthemex/ComfyUI_FunCineForge"
+#  Used by Comfy Registry https://registry.comfy.org
+
+[tool.comfy]
+PublisherId = "smthemex"
+DisplayName = "ComfyUI_FunCineForge"
+Icon = ""
+includes = []
