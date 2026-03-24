@@ -28,6 +28,7 @@ pip install -r requirements.txt
 * speech_seaco_paraformer_large_asr_nat-zh-cn-16k-common-vocab8404-pytorch[links](https://www.modelscope.cn/models/iic/speech_seaco_paraformer_large_asr_nat-zh-cn-16k-common-vocab8404-pytorch)
 * speech_campplus_sv_zh-cn_16k-common[links](https://www.modelscope.cn/models/iic/speech_campplus_sv_zh-cn_16k-common)
 * punc_ct-transformer_zh-cn-common-vocab272727-pytorch[links](https://www.modelscope.cn/models/iic/punc_ct-transformer_zh-cn-common-vocab272727-pytorch)
+* [segmentation-3.0](https://huggingface.co/pyannote/segmentation-3.0)
 * 去我[云盘](https://pan.quark.cn/s/4d76d1185088)拉取全部模型的zip吧,解压到funcineforge目录下（结构如下图）
 ![](https://github.com/smthemex/ComfyUI_FunCineForge/blob/main/example_workflows/dir.png)
 ```
