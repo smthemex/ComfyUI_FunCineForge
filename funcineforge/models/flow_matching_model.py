@@ -293,7 +293,7 @@ class CosyVoiceFlowMatching(nn.Module):
                         spk_emb = extract_campp_xvec(prompt_wav, **kwargs)
                         spk_emb = torch.from_numpy(spk_emb)
                         spk_emb_lengths = torch.tensor([spk_emb.shape[1]], dtype=torch.int64)
-                        print(spk_emb.shape, spk_emb_lengths)
+                        #print(spk_emb.shape, spk_emb_lengths) #torch.Size([1, 192]) tensor([192])
                     # prompt_wav = load_audio_text_image_video(prompt_wav, fs=self.sample_rate)   
                     # prompt_wav = prompt_wav[None, :]
                     # prompt_wav_lengths = torch.tensor([prompt_wav.shape[1]], dtype=torch.int64)
@@ -302,7 +302,7 @@ class CosyVoiceFlowMatching(nn.Module):
             else:
                 spk_emb = prompt_wav["waveform"].squeeze(0)
                 spk_emb_lengths = torch.tensor([spk_emb.shape[1]], dtype=torch.int64)
-                print(spk_emb.shape, spk_emb_lengths) #torch.Size([2, 1024]) tensor([1024])
+                #print(spk_emb.shape, spk_emb_lengths) #torch.Size([2, 1024]) tensor([1024])
         else:
             logging.info("[error] prompt_wav is None or not path or path not exists! Please provide the correct speaker embedding.")
         
@@ -337,7 +337,7 @@ class CosyVoiceFlowMatching(nn.Module):
         batch.update({'finalize': finalize, 'chunk_size': chunk_size})
         feat = self._inference(**batch, **kwargs)
         feat = feat.float()
-        logging.info(f"{uttid}: feat lengths {feat.shape[1]}")
+        #logging.info(f"{uttid}: feat lengths {feat.shape[1]}") #INFO: clip_0: feat lengths 408
 
         return feat
 
@@ -452,7 +452,7 @@ class CosyVoiceFlowMatching(nn.Module):
             spks=rand_xvec.to(fm_dtype), cond=conditions.to(fm_dtype), **kwargs
         )
         escape_time = (time.time() - fm_time) * 1000.0
-        logging.info(f"fm dec {n_timesteps} step time: {escape_time:.2f}, avg {escape_time/n_timesteps:.2f} ms")
+        #logging.info(f"fm dec {n_timesteps} step time: {escape_time:.2f}, avg {escape_time/n_timesteps:.2f} ms") #INFO: fm dec 10 step time: 855.29, avg 85.53 ms
         return feat
 
     def solve_euler(self, x, t_span, mu, mask, spks=None, cond=None, **kwargs):

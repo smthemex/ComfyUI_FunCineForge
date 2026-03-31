@@ -46,7 +46,7 @@ pypinyin
 python_speech_features
 python-Levenshtein
 PyYAML
-Request
+Requests
 rotary_embedding_torch
 scikit-learn
 scipy

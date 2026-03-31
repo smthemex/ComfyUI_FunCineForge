@@ -54,13 +54,13 @@ class FunCineForgeLM(nn.Module):
                 param.requires_grad = False
             model.eval()
 
-        logging.info(f"use_lora: {llm_conf.get('use_lora', False)}, use_qlora: {llm_conf.get('use_qlora', False)}, infer_use_lora: {kwargs.get('infer_use_lora',False)}, infer_lora_merged: {kwargs.get('infer_lora_merged',False)}")
-
+        #logging.info(f"use_lora: {llm_conf.get('use_lora', False)}, use_qlora: {llm_conf.get('use_qlora', False)}, infer_use_lora: {kwargs.get('infer_use_lora',False)}, infer_lora_merged: {kwargs.get('infer_lora_merged',False)}")
+        #INFO: use_lora: False, use_qlora: False, infer_use_lora: False, infer_lora_merged: False
         if llm_conf.get("activation_checkpoint", False):
             model.gradient_checkpointing_enable()
 
         self.llm_dtype = llm_conf.get("llm_dtype", "fp32")
-        print(f"llm_dtype: {self.llm_dtype}, dtype_map")
+        #print(f"llm_dtype: {self.llm_dtype}, dtype_map") #bf16,
         self.llm = model.to(dtype_map[self.llm_dtype])
         llm_dim = model.get_input_embeddings().weight.shape[-1]
         
@@ -250,10 +250,10 @@ class FunCineForgeLM(nn.Module):
         uttid = key[0]
         inputs_emb = self.inference_prepare(data_in, **kwargs)
         
-        logging.info(f"{uttid}: min length: {kwargs['min_length']}, max length: {kwargs['max_length']}")
-        print(kwargs.get("infer_dtype", []))
+        #logging.info(f"{uttid}: min length: {kwargs['min_length']}, max length: {kwargs['max_length']}") #min length: 50, max length: 1500
+        #print(kwargs.get("infer_dtype", [])) #bf16
         dtype = dtype_map[kwargs.get("infer_dtype", "bf16")] #fp32
-        print(f"dtype: {dtype}")
+        #print(f"dtype: {dtype}") #dtype: torch.bfloat16
         if not hasattr(self, "llm_generator"):
             llm_generator_conf = kwargs.get("dataset_conf", {})
             self.llm_generator = LLMDecoder(

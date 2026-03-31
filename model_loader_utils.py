@@ -14,37 +14,37 @@ import torchaudio
 cur_path = os.path.dirname(os.path.abspath(__file__))
 
 # wrapped comfy
-def  re_save_video(videos,codec,filename_prefix,format):
+def  re_save_video(video,codec,filename_prefix,format):
     from comfy_api.latest import  Types
-    filepath_list=[]
-    file_folder_list=[]
-    for i, video in enumerate(videos):
+    # filepath_list=[]
+    # file_folder_list=[]
+    #for i, video in enumerate(videos):
     #video=InputImpl.VideoFromComponents(Types.VideoComponents(images=images, audio=audio, frame_rate=Fraction(fps)))
-        width, height = video.get_dimensions()
-        full_output_folder, filename, counter, subfolder, filename_prefix = folder_paths.get_save_image_path(
-                filename_prefix+str(i),
-                folder_paths.get_output_directory(),
-                width,
-                height
-            )
-
-        saved_metadata = None
-
-        file = f"{filename}_{counter:05}_.{Types.VideoContainer.get_extension(format)}"
-        video_path=os.path.join(full_output_folder, file)
-        filename = os.path.basename(video_path)
-        folder_name, _ = os.path.splitext(filename)
-        video_dir=os.path.join(full_output_folder,folder_name)
-        os.makedirs(video_dir, exist_ok=True)
-        video.save_to(
-            os.path.join(video_dir, file),
-            format=Types.VideoContainer(format),
-            codec=codec,
-            metadata=saved_metadata
+    width, height = video.get_dimensions()
+    full_output_folder, filename, counter, subfolder, filename_prefix = folder_paths.get_save_image_path(
+            filename_prefix,
+            folder_paths.get_output_directory(),
+            width,
+            height
         )
-        filepath_list.append(os.path.join(video_dir, file))
-        file_folder_list.append(video_dir)
-    return filepath_list,file_folder_list
+
+    saved_metadata = None
+
+    file = f"{filename}_{counter:05}_.{Types.VideoContainer.get_extension(format)}"
+    video_path=os.path.join(full_output_folder, file)
+    filename = os.path.basename(video_path)
+    folder_name, _ = os.path.splitext(filename)
+    video_dir=os.path.join(full_output_folder,folder_name)
+    os.makedirs(video_dir, exist_ok=True)
+    video.save_to(
+        os.path.join(video_dir, file),
+        format=Types.VideoContainer(format),
+        codec=codec,
+        metadata=saved_metadata
+    )
+        # filepath_list.append(os.path.join(video_dir, file))
+        # file_folder_list.append(video_dir)
+    return os.path.join(video_dir, file),video_dir
 
 
 

@@ -359,87 +359,120 @@ from .funcineforge.datasets import FunCineForgeDS
 model_pool: typing.Optional[GlobalModels] = None
 engine = None
 
-def get_segments_data(segments):
+def get_segments_data(segments,video_duration):
+
+    # segments={
+    #     "start": start_time,
+    #     "end": end_time,
+    #     "age": age_input,
+    #     "gender": gender_input,
+    #     "spk": spk,
+    #         }
+    # start, end = max(0.0, float(seg['start']) - 0.1), min(float(seg['end']) + 0.1, video_duration)
+    # duration = end - start
+
+    #  {"role": "dialogue", "content": [{
+    #                 "start": 0.0,
+    #                 "duration": round(duration, 2),
+    #                 "spk": f"{spk}",
+    #                 "gender": seg['gender'],
+    #                 "age": seg['age']
+    #             }]},
     segment_inputs = []
     for seg in segments:
-        segment_inputs.extend([
-            seg["text"],
-            seg["clue"],
-            seg["start"],
-            seg["end"],
-            seg["age"],
-            seg["gender"],
-            seg["audio"],
-            seg["enable"]
-        ])
+        start, end = max(0.0, float(seg['start']) - 0.1), min(float(seg['end']) + 0.1, video_duration)
+        duration = end - start
+        seg["duration"]=duration
+        segment_inputs.append(seg)
+
+    # segment_inputs = []
+    # for seg in segments:
+    #     segment_inputs.extend([
+    #         seg["text"],
+    #         seg["clue"],
+    #         seg["start"],
+    #         seg["end"],
+    #         seg["age"],
+    #         seg["gender"],
+    #         seg["audio"],
+    #         seg["enable"]
+    #     ])
     return segment_inputs
 
-def pre_data_simple(video_path_list, conf_file, pretrained_models_dir, work_dir_list, device,config_path,segments,):
+def pre_data_simple(video_path, conf_file, pretrained_models_dir, work_dir, device,config_path,segments,video_type,refer_audio,text,clue,fps):
     
-    video_duration_list=[]
-    for video_path,work_dir in zip(video_path_list,work_dir_list):
-        video_duration = get_video_duration(video_path)
-        if video_duration <= 0:
-            return None, "❌ 无法获取视频时长，请检查视频文件"
-        video_duration_list.append(video_duration)
-        simple_main_infer(video_path, work_dir, conf_file, pretrained_models_dir,device=device)
-    segment_inputs=get_segments_data(segments)
-    print(segment_inputs)
-    segments_data = []
-    for i,video_duration in enumerate(video_duration_list):
-        base_idx = i * 8
-        enable = segment_inputs[base_idx + 7]  # enable_check
-        if not enable:
-            continue
+
+    video_duration,error = get_video_duration(video_path)
+   
+    if video_duration <= 0:
+        print(f": {error}")
+        return None,None, "❌ 无法获取视频时长，请检查视频文件"
+    #video_duration_list.append(video_duration)
+    simple_main_infer(video_path, work_dir, conf_file, pretrained_models_dir,device=device)
+    segment_inputs=get_segments_data(segments,video_duration) #dialogue #content
+    #print(segment_inputs)
+    # data = {
+    #         "text": str(text).strip(),
+    #         "clue": str(clue) if clue else "",
+    #         "start": float(start) if start else 0.0,
+    #         "end": float(end) if end else 0.0,
+    #         "age": str(age) if age else "不确定",
+    #         "gender": str(gender) if gender else "不确定",
+    #         "ref_audio": str(refer_audio) if refer_audio else ""
+    #     }
+
+    # segments_data = []
+    # for i in range(len(segments)):
+    #     base_idx = i * 8
+    #     enable = segment_inputs[base_idx + 7]  # enable_check
+    #     if not enable:
+    #         continue
     
-        text = segment_inputs[base_idx + 0]
-        if not text or not text.strip():
-            continue
+    #     text = segment_inputs[base_idx + 0]
+    #     if not text or not text.strip():
+    #         continue
         
-        clue = segment_inputs[base_idx + 1]
-        start = segment_inputs[base_idx + 2]
-        end = segment_inputs[base_idx + 3]
-        age = segment_inputs[base_idx + 4]
-        gender = segment_inputs[base_idx + 5]
-        ref_audio = segment_inputs[base_idx + 6]
+    #     clue = segment_inputs[base_idx + 1]
+    #     start = segment_inputs[base_idx + 2]
+    #     end = segment_inputs[base_idx + 3]
+    #     age = segment_inputs[base_idx + 4]
+    #     gender = segment_inputs[base_idx + 5]
+    #     ref_audio = segment_inputs[base_idx + 6]
         
-        errors = validate_timestamps(start, end, video_duration)
-        if errors:
-            return None, f"❌ 片段 {i+1} 时间戳错误：\n" + "\n".join(errors)
+    #     errors = validate_timestamps(start, end, video_duration)
+    #     if errors:
+    #         return None,None, f"❌ 片段 {i+1} 时间戳错误：\n" + "\n".join(errors)
         
-        data = {
-            "text": str(text).strip(),
-            "clue": str(clue) if clue else "",
-            "start": float(start) if start else 0.0,
-            "end": float(end) if end else 0.0,
-            "age": str(age) if age else "不确定",
-            "gender": str(gender) if gender else "不确定",
-            "ref_audio": str(ref_audio) if ref_audio else ""
-        }
+    #     data = {
+    #         "text": str(text).strip(),
+    #         "clue": str(clue) if clue else "",
+    #         "start": float(start) if start else 0.0,
+    #         "end": float(end) if end else 0.0,
+    #         "age": str(age) if age else "不确定",
+    #         "gender": str(gender) if gender else "不确定",
+    #         "ref_audio": str(ref_audio) if ref_audio else ""
+    #     }
         
-        segments_data.append(data)
+    #     segments_data.append(data)
     frontend=init_frontend_models(config_path,pretrained_models_dir,device)
-    jsonl_path_list=[]
-    jsonl_items_list=[]
-    full_report_list=[]
-    for video_path,work_dir in zip(video_path_list,work_dir_list):
-        jsonl_path, jsonl_items=generate_jsonl_data(frontend, video_path, segments_data, work_dir, video_duration)
-        jsonl_path_list.append(jsonl_path)
-        jsonl_items_list.append(jsonl_items)
-        full_report="got error"
-        if jsonl_items:
-            report_lines = []
-            report_lines.append(f"✅ 任务完成！共生成 **{len(jsonl_items)}** 个片段数据。\n")
-            report_lines.append("📄 **详细 JSONL 数据预览：**")
-            report_lines.append("=" * 40)
-            for idx, item in enumerate(jsonl_items):
-                item_json = json.dumps(item, ensure_ascii=False, indent=2)
-                report_lines.append(f"\n--- 🎬 片段 #{idx + 1} ---")
-                report_lines.append(item_json)
-                report_lines.append("-" * 40)
-            full_report = "\n".join(report_lines)
-        full_report_list.append(full_report)
-    return jsonl_path_list,jsonl_items_list,full_report_list
+
+    #for video_path,work_dir,video_type,spk in zip(video_path_list,work_dir_list,video_type_list,spk_list):
+    jsonl_path, jsonl_items=generate_jsonl_data(frontend, video_path, segment_inputs, work_dir, video_duration,refer_audio,text,clue,video_type,fps)
+
+    full_report="got error"
+    if jsonl_items:
+        report_lines = []
+        report_lines.append(f"✅ 任务完成！共生成 **{len(jsonl_items)}** 个片段数据。\n")
+        report_lines.append("📄 **详细 JSONL 数据预览：**")
+        report_lines.append("=" * 40)
+        for idx, item in enumerate([jsonl_items]):
+            item_json = json.dumps(item, ensure_ascii=False, indent=2)
+            report_lines.append(f"\n--- 🎬 片段 #{idx + 1} ---")
+            report_lines.append(item_json)
+            report_lines.append("-" * 40)
+        full_report = "\n".join(report_lines)
+    #full_report_list.append(full_report)
+    return jsonl_path,jsonl_items,full_report
 
 def init_engine(ckpt_path,config_path,output_dir,device):
     engine = AutoFrontend(ckpt_path, config_path, output_dir, device)
@@ -460,83 +493,83 @@ def init_frontend_models(config_path,pretrained_models_dir,device):
 
 
 def funcineforge_infer(eng, conds, cfg):
-    jsonl_path_list=conds[0]
-    jsonl_items_list=conds[1]
-    video_path_list=conds[2]
-    work_dir_list=conds[3]
+    jsonl_path=conds[0]
+    jsonl_items=conds[1]
+    video_file=conds[2]
+    work_dir=conds[3]
     
     try:
-        audio_lists=[]
-        for jsonl_path,jsonl_items,video_file,TEMP_DIR in zip(jsonl_path_list,jsonl_items_list,video_path_list,work_dir_list):
-            print("🚀 FunCineForge 模型推理中...")
-            # with open(jsonl_path, 'r', encoding='utf-8') as f:
-            #      index_ds = [json.loads(line.strip()) for line in f if line.strip()]
-            eng.kwargs["output_dir"]=TEMP_DIR
-            dataset_conf = eng.kwargs.get("dataset_conf")
-            dataset = FunCineForgeDS(jsonl_path, **dataset_conf)
-            audio_list=eng.inference(dataset,input_len=len(dataset),**cfg)
-            audio_lists.append(audio_list)
-            print("✅ FunCineForge 模型推理完成！",audio_lists)
-            print("🎵 正在将配音语音粘贴回静音视频...")
+        #audio_lists=[]
+        #for jsonl_path,jsonl_items,video_file,TEMP_DIR in zip(jsonl_path_list,jsonl_items_list,video_path_list,work_dir_list):
+        print("🚀 FunCineForge 模型推理中...")
+        # with open(jsonl_path, 'r', encoding='utf-8') as f:
+        #      index_ds = [json.loads(line.strip()) for line in f if line.strip()]
+        eng.kwargs["output_dir"]=work_dir
+        dataset_conf = eng.kwargs.get("dataset_conf")
+        dataset = FunCineForgeDS(jsonl_path, **dataset_conf)
+        audio_list=eng.inference(dataset,input_len=len(dataset),**cfg)
+        #audio_lists.append(audio_list)
+        print("✅ FunCineForge 模型推理完成！")
+        print("🎵 正在将配音语音粘贴回静音视频...")
 
-            output_wav_dir = os.path.join(TEMP_DIR, "wav")
-            final_video_path = os.path.join(TEMP_DIR, "dubbed_video.mp4")
+        output_wav_dir = os.path.join(work_dir, "wav")
+        final_video_path = os.path.join(work_dir, "dubbed_video.mp4")
+        
+        if not os.path.exists(output_wav_dir):
+            print(f"⚠️ 创建音频输出目录：{output_wav_dir}")
+            return None
+        
+        wav_files = sorted([f for f in os.listdir(output_wav_dir) if f.endswith('.wav')])
+        print(f"🚀 正在处理 {len(wav_files)} 个音频文件...wav_files={wav_files}") # wav_files=['clip_0.wav']
+        if not wav_files:
+            print(f"⚠️ 未生成任何音频文件：{output_wav_dir}")
+            return None
+        
+        time_mapping = {}
+        for i, item in enumerate(jsonl_items):
+            matched_file = None
+            for wf in wav_files:
+                if wf.startswith(item['utt']):
+                    matched_file = wf
+                    print(f"✅ 匹配到音频文件：{wf}") #clip_0.wav
+                    break
+            if matched_file:
+                start_time = float(item['start'])
+                time_mapping[matched_file] = start_time
             
-            if not os.path.exists(output_wav_dir):
-                print(f"⚠️ 创建音频输出目录：{output_wav_dir}")
-                return None
             
-            wav_files = sorted([f for f in os.listdir(output_wav_dir) if f.endswith('.wav')])
-            print(f"🚀 正在处理 {len(wav_files)} 个音频文件...wav_files={wav_files}") #wav_files=['a_134949.wav', 'a_135352.wav', 'a_140102.wav']
-            if not wav_files:
-                print(f"⚠️ 未生成任何音频文件：{output_wav_dir}")
-                return None
+        original_clip = VideoFileClip(video_file)
+        video_duration = original_clip.duration
+        video_only = original_clip.without_audio()
+        audio_clips = []
+        print("🚀 正在处理音频文件...",time_mapping) #{'clip_0.wav': 0.0}
+        for wav_file, start_time in time_mapping.items():
+            wav_path = os.path.join(output_wav_dir, wav_file)
+            audio_clip = AudioFileClip(wav_path)
+            audio_clip = audio_clip.with_start(start_time)
+            audio_clips.append(audio_clip)
             
-            time_mapping = {}
-            for i, item in enumerate(jsonl_items):
-                matched_file = None
-                for wf in wav_files:
-                    if wf.startswith(item['utt']):
-                        matched_file = wf
-                        print(f"✅ 匹配到音频文件：{wf}")
-                        break
-                if matched_file:
-                    start_time = float(item['start'])
-                    time_mapping[matched_file] = start_time
-                
-                
-            original_clip = VideoFileClip(video_file)
-            video_duration = original_clip.duration
-            video_only = original_clip.without_audio()
-            audio_clips = []
-            print("🚀 正在处理音频文件...",time_mapping)
-            for wav_file, start_time in time_mapping.items():
-                wav_path = os.path.join(output_wav_dir, wav_file)
-                audio_clip = AudioFileClip(wav_path)
-                audio_clip = audio_clip.with_start(start_time)
-                audio_clips.append(audio_clip)
-                
-            final_audio = CompositeAudioClip(audio_clips)
-            if final_audio.duration < video_duration:
-                final_audio = final_audio.with_duration(video_duration)
-            final_clip = video_only.with_audio(final_audio)
-            final_clip.write_videofile(
-                final_video_path,
-                codec='libx264',
-                audio_codec='aac',
-                fps=original_clip.fps,
-                logger=None
-            )
-            original_clip.close()
-            video_only.close()
-            for ac in audio_clips:
-                ac.close()
-            if 'final_audio' in locals():
-                final_audio.close()
-            final_clip.close()
-            
-            print("✅ 配音完成")
-        return audio_lists
+        final_audio = CompositeAudioClip(audio_clips)
+        if final_audio.duration < video_duration:
+            final_audio = final_audio.with_duration(video_duration)
+        final_clip = video_only.with_audio(final_audio)
+        final_clip.write_videofile(
+            final_video_path,
+            codec='libx264',
+            audio_codec='aac',
+            fps=original_clip.fps,
+            logger=None
+        )
+        original_clip.close()
+        video_only.close()
+        for ac in audio_clips:
+            ac.close()
+        if 'final_audio' in locals():
+            final_audio.close()
+        final_clip.close()
+        
+        print("✅ 配音完成")
+        return audio_list
     except Exception as e:
         import traceback
         traceback.print_exc()
