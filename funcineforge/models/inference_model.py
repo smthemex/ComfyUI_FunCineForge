@@ -28,12 +28,15 @@ class FunCineForgeInferModel(nn.Module):
         self.fm_model = fm_model.model
         self.voc_model = voc_model.model
         mel_extractor = self.fm_model.mel_extractor
+        #print(f"[mel_extractor]: {mel_extractor}")
         if mel_extractor:
             self.mel_frame_rate = mel_extractor.sampling_rate // mel_extractor.hop_length
             self.sample_rate = mel_extractor.sampling_rate
+            #print(f"[self.mel_frame_rate1]: {self.mel_frame_rate}, [self.sample_rate]: {self.sample_rate}") #[self.mel_frame_rate1]: 50, [self.sample_rate]: 24000
         else:
             self.mel_frame_rate = self.fm_model.sample_rate // 480
             self.sample_rate = self.fm_model.sample_rate
+            #print(f"[self.mel_frame_rate2]: {self.mel_frame_rate}, [self.sample_rate]: {self.sample_rate}")
 
 
     @torch.no_grad()
@@ -44,15 +47,17 @@ class FunCineForgeInferModel(nn.Module):
         key: list = None,
         **kwargs,
     ):
-        uttid = key[0]
-        logging.info(f"generating {uttid}")
+        #uttid = key[0]
+        #logging.info(f"generating {uttid}") #clip_0
         # text -> codec in [1, T]
         kwargs["tokenizer"] = self.tokenizer
         set_all_random_seed(kwargs.get("random_seed", 0))
         lm_time = time.time()
         codec, hit_eos, states = self.lm_model.inference(data_in, data_lengths, key, **kwargs)
-        logging.info(f"[llm time]: {((time.time()-lm_time)*1000):.2f} ms, [hit_eos]: {hit_eos}, [gen len]: {codec.shape[1]}, [speech tokens]: {codec[0].cpu().tolist()}")
+        # logging.info(f"[llm time]: {((time.time()-lm_time)*1000):.2f} ms, [hit_eos]: {hit_eos}, [gen len]: {codec.shape[1]}, [speech tokens]: {codec[0].cpu().tolist()}")
+        
         wav, batch_data_time = None, 1.0
+        #print(f"[self.sample_rate]: {self.sample_rate}")
         if codec.shape[1] > 0:
             fm_time = time.time()
             data_in[0]["codec"] = codec
@@ -61,7 +66,7 @@ class FunCineForgeInferModel(nn.Module):
             # feat -> wav
             set_all_random_seed(kwargs.get("random_seed", 0))
             wav = self.voc_model.inference([feat[0]], data_lengths, key, **kwargs)
-            print(f"[wav shape]: {wav.shape}") #[wav shape]: torch.Size([1, 51840])
+            #print(f"[wav shape]: {wav.shape}") #[wav shape]: torch.Size([1, 51840])
             # output save
             output_dir = kwargs.get("output_dir", None)
             if output_dir is not None:
@@ -97,9 +102,10 @@ class FunCineForgeInferModel(nn.Module):
                         pass
                 else: #pli list
                     pass
-            logging.info(f"fm_voc time: {((time.time()-fm_time)*1000):.2f} ms")
+            #logging.info(f"fm_voc time: {((time.time()-fm_time)*1000):.2f} ms") # (inference_model:104) INFO: fm_voc time: 13958.33 ms
 
             batch_data_time = wav.shape[1] / self.voc_model.sample_rate
+            #print(f"[batch_data_time]: {batch_data_time:.2f}, [ self.voc_model.sample_rate]: {self.voc_model.sample_rate} s") #[batch_data_time]: 8.16, [ self.voc_model.sample_rate]: 24000 s
 
         return [[wav]], {"batch_data_time": batch_data_time}
     

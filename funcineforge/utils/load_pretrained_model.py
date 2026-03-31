@@ -74,13 +74,13 @@ def load_pretrained_model(
     if isinstance(scope_map, str):
         scope_map = scope_map.split(",")
     scope_map += ["module.", "None"]
-    logging.info(f"scope_map: {scope_map}")
+    #logging.info(f"scope_map: {scope_map}") # ['module.', 'None']
 
     if excludes is not None:
         if isinstance(excludes, str):
             excludes = excludes.split(",")
 
-    logging.info(f"excludes: {excludes}")
+    #logging.info(f"excludes: {excludes}") # excludes: None
 
     param_mapping_count = 0
     exclusion_match_count = 0

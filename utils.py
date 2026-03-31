@@ -5,22 +5,21 @@ from pydub import AudioSegment
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from .speaker_diarization.speaker_diarization_sample.local.vision_processer import VisionProcesser
 
-
 # ==================== 工具函数 ====================
 
 def get_video_duration(video_path):
-    """获取视频时长（秒）"""
+
     try:
         clip = VideoFileClip(video_path)
         duration = clip.duration
         clip.close()
-        return duration
+        return duration,"done"
     except Exception as e:
-        return 0.0
+        return 0.0,str(e)
     
 def extract_audio_from_video(video_path: str, wav_path: str, sample_rate: int = 16000):
     """Extract mono 16kHz WAV from video."""
-    print(f"[INFO] Extracting audio from {video_path} to {wav_path}")
+    #print(f"[INFO] Extracting audio from {video_path} to {wav_path}")
     audio = AudioSegment.from_file(video_path)
     audio = audio.set_frame_rate(sample_rate).set_channels(1)
     audio.export(wav_path, format="wav")
@@ -64,71 +63,76 @@ def clip_video_segment(video_path, start_time, end_time, output_dir, clip_name):
     except Exception as e:
         return None
 
-def generate_jsonl_data(frontend, video_path, segments_data, work_dir, video_duration):
+def generate_jsonl_data(frontend, video_path, segments_data, work_dir, video_duration,refer_audio,text,clue,video_type,fps):
     """生成 JSONL 格式数据"""
-    video_type = detect_video_type(video_path)
+    #video_type = detect_video_type(video_path)
     
-    jsonl_items = []
+    #jsonl_items = []
     
-    for idx, seg in enumerate(segments_data):
-        utt_name = f"clip_{idx}"
-        start, end = max(0.0, float(seg['start']) - 0.1), min(float(seg['end']) + 0.1, video_duration)
-        duration = end - start
-        
-        
-        video_clip, audio_clip = clip_video_segment(
-            video_path, start, end, 
-            work_dir, utt_name
-        )
-        if not video_clip or not audio_clip:
-            continue
-        
-        pkl_path = os.path.join(work_dir, f"{utt_name}.pkl")
-        
-        extract_visual_embeddings(
-            frontend,
-            vad_list = [[0.0, round(duration, 2)]],
-            video_path = video_clip, 
-            wav_path = audio_clip, 
-            pkl_path = pkl_path
-        )
-        
-        ref_audio_path = audio_clip
-        if seg.get('ref_audio') and os.path.exists(seg['ref_audio']):
-            src = seg['ref_audio']
-            dst = os.path.join(work_dir, f"{utt_name}_ref.wav")
-            shutil.copy(src, dst)
-            ref_audio_path = dst
-        
-        item = {
-            "messages": [
-                {"role": "text", "content": seg['text']},
-                {"role": "vocal", "content": ref_audio_path},
-                {"role": "video", "content": video_clip},
-                {"role": "face", "content": pkl_path},
-                {"role": "dialogue", "content": [{
-                    "start": 0.0,
-                    "duration": round(duration, 2),
-                    "spk": "1",
-                    "gender": seg['gender'],
-                    "age": seg['age']
-                }]},
-                {"role": "clue", "content": seg['clue']}
-            ],
-            "utt": utt_name,
-            "type": video_type,
-            "speech_length": int(duration * 25),
-            "start": start,
-            "end": end
-        }
-        jsonl_items.append(item)
+    #for idx, (seg,video_type,spk) in enumerate(zip(segments_data, video_type_list, spk_list)):
+    utt_name = f"clip_{0}"
+    end_list = []
+    start_list = []
+    content = []
+    for seg in segments_data:
+        end=seg['end']
+        end_list.append(end)
+        start=seg['start']
+        start_list.append(start)
+        content.append(seg)
+
+    max_end=max(end_list)
+    min_start=min(start_list)
+
+    #start, end = max(0.0, float(min_start) - 0.1), min(float(max_end) + 0.1, video_duration)
+    duration = max_end - min_start
+
+    video_clip, audio_clip = clip_video_segment(
+        video_path, min_start, max_end, 
+        work_dir, utt_name
+    )
+
+    
+    pkl_path = os.path.join(work_dir, f"{utt_name}.pkl")
+    
+    extract_visual_embeddings(
+        frontend,
+        vad_list = [[0.0, duration]],
+        video_path = video_clip, 
+        wav_path = audio_clip, 
+        pkl_path = pkl_path
+    )
+    
+    ref_audio_path = audio_clip
+    if  os.path.exists(refer_audio):
+        src = refer_audio
+        dst = os.path.join(work_dir, f"{utt_name}_ref.wav")
+        shutil.copy(src, dst)
+        ref_audio_path = dst
+    
+    item = {
+        "messages": [
+            {"role": "text", "content": text},
+            {"role": "vocal", "content": ref_audio_path},
+            {"role": "video", "content": video_clip},
+            {"role": "face", "content": pkl_path},
+            {"role": "dialogue", "content": content},
+            {"role": "clue", "content": clue}
+        ],
+        "utt": utt_name,
+        "type": video_type,
+        "speech_length": int(duration * fps),
+        "start": start,
+        "end": end
+    }
+    #sonl_items.append(item)
     
     jsonl_path = os.path.join(work_dir, "input_data.jsonl")
     with open(jsonl_path, 'w', encoding='utf-8') as f:
-        for item in jsonl_items:
-            f.write(json.dumps(item, ensure_ascii=False) + '\n')
+        #for item in jsonl_items:
+        f.write(json.dumps(item, ensure_ascii=False) + '\n')
     
-    return jsonl_path, jsonl_items
+    return jsonl_path, item
 
 def validate_timestamps(start, end, video_duration):
     """验证时间戳合法性"""

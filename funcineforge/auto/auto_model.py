@@ -39,7 +39,7 @@ class AutoModel:
     def build_model(**kwargs):
         assert "model" in kwargs
         if "model_conf" not in kwargs:
-            logging.info("download models from {} or local dir".format(kwargs.get("hub", "ms")))
+            #logging.info("download models from {} or local dir".format(kwargs.get("hub", "ms")))
             kwargs = download_model(**kwargs)
         
         set_all_random_seed(kwargs.get("seed", 0))
@@ -100,7 +100,7 @@ class AutoModel:
         # init_param
         init_param = kwargs.get("init_param", None)
         if init_param is not None and os.path.exists(init_param):
-            logging.info(f"Loading pretrained params from ckpt: {init_param}")
+            #logging.info(f"Loading pretrained params from ckpt: {init_param}")
             load_pretrained_model(
                 path=init_param,
                 model=model,
@@ -133,6 +133,7 @@ class AutoModel:
     def inference(self, input, input_len=1, model=None, kwargs=None, **cfg):
         kwargs = self.kwargs if kwargs is None else kwargs
         deep_update(kwargs, cfg)
+        set_all_random_seed(cfg.get("seed", 0))
         model = self.model if model is None else model
         model.eval()
         batch_size = kwargs.get("batch_size", 1)

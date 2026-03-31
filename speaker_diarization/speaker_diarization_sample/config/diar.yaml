@@ -2,7 +2,7 @@
 
 fbank_dim: 80
 embedding_size: 192
-sample_rate: 16000
+sample_rate: 16000 
 
 feature_extractor:
   obj: local.process.processor.FBank

@@ -662,7 +662,7 @@ class CausalHiFTGenerator(nn.Module):
         self.context_size = 8
 
     def remove_weight_norm(self):
-        print('Removing weight norm...')
+        #print('Removing weight norm...')
         for l in self.ups:
             try:
                 remove_weight_norm(l)
@@ -832,20 +832,22 @@ class CausalHifiGan(nn.Module):
         batch = self.inference_prepare(data_in, data_lengths, key, **kwargs)
         #voc_dtype = dtype_map[kwargs.get("voc_dtype", "fp32")]
         voc_dtype = dtype_map[kwargs.get("infer_dtype", "fp32")]
-        print(f"voc_dtype: {voc_dtype}") #dtype: torch.bfloat16
+        #print(f"voc_dtype: {voc_dtype}") #dtype: torch.bfloat16
         x = batch["x"].to(voc_dtype)
         recon_speech = self.generator.inference(x.transpose(1, 2), f0_cpu=f0_cpu, finalize=finalize)[0].squeeze(1)
         recon_speech = recon_speech.float()
-        logging.info(f"{uttid}: wav lengths {recon_speech.shape[1]}")
-        print(f"recon_speech: {recon_speech.shape}")
+        #logging.info(f"{uttid}: wav lengths {recon_speech.shape[1]}") #clip_0: wav lengths 195840
+        #print(f"recon_speech: {recon_speech.shape}") #torch.Size([1, 195840])
         output_dir = kwargs.get("output_dir", None)
         output_sr = kwargs.get("output_sr", None)
-
+        #print(f"output_dir: {output_dir}, output_sr: {output_sr},self.sample_rate: {self.sample_rate}") #24000
+        output_dir=None
         if output_dir is not None:
             wav_out_dir = os.path.join(output_dir, "wav")
             os.makedirs(wav_out_dir, exist_ok=True)
             wav_sr = self.sample_rate
             if output_sr is not None and output_sr != self.sample_rate:
+                #print(f"Resampling from {self.sample_rate} to {output_sr}")
                 recon_speech = torchaudio.functional.resample(
                     recon_speech,
                     orig_freq=self.sample_rate,
@@ -853,7 +855,7 @@ class CausalHifiGan(nn.Module):
                 )
                 wav_sr = output_sr
             torchaudio.save(
-                os.path.join(wav_out_dir, f"{key[0]}.wav"), recon_speech.cpu(),
+                os.path.join(wav_out_dir, f"{key[0]}1.wav"), recon_speech.cpu(),
                 sample_rate=wav_sr, encoding='PCM_S', bits_per_sample=16
             )
 
