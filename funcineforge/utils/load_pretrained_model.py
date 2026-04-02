@@ -33,7 +33,7 @@ def load_pretrained_model(
     dst_state = obj.state_dict()
     use_deepspeed = kwargs.get("use_deepspeed", False)
 
-    logging.info(f"ckpt: {path}, use_deepspeed: {use_deepspeed}")
+    #logging.info(f"ckpt: {path}, use_deepspeed: {use_deepspeed}")
 
     if use_deepspeed and os.path.isdir(path):
         ckpt_dir = os.path.dirname(path)
@@ -91,7 +91,7 @@ def load_pretrained_model(
         if excludes is not None:
             for k_ex in excludes:
                 if k.startswith(k_ex):
-                    logging.info(f"key: {k} matching: {k_ex}, excluded")
+                    #logging.info(f"key: {k} matching: {k_ex}, excluded")
                     excludes_flag = True
                     break
         if excludes_flag:
@@ -133,7 +133,7 @@ def load_pretrained_model(
             print(f"Warning, miss key in ckpt: {k}, {path}")
             missing_key_count +=1
     
-    logging.info(f"matched keys: {param_mapping_count}, missing keys: {missing_key_count}, exclusion_match_count: {exclusion_match_count}")
+    #logging.info(f"matched keys: {param_mapping_count}, missing keys: {missing_key_count}, exclusion_match_count: {exclusion_match_count}")
 
     flag = obj.load_state_dict(dst_state, strict=True)
-    logging.info(f"Loading ckpt: {path}, status: {flag}")
+    #logging.info(f"Loading ckpt: {path}, status: {flag}")

@@ -61,78 +61,96 @@ def clip_video_segment(video_path, start_time, end_time, output_dir, clip_name):
         clip.close()
         return video_clip, audio_clip
     except Exception as e:
+        print(f"[ERROR] Failed to process {video_path}: {e}")
         return None
 
-def generate_jsonl_data(frontend, video_path, segments_data, work_dir, video_duration,refer_audio,text,clue,video_type,fps):
+def generate_jsonl_data(frontend, video_path, segments_data, work_dir, video_duration,messages,video_type,fps=25):
     """生成 JSONL 格式数据"""
     #video_type = detect_video_type(video_path)
     
-    #jsonl_items = []
-    
-    #for idx, (seg,video_type,spk) in enumerate(zip(segments_data, video_type_list, spk_list)):
-    utt_name = f"clip_{0}"
-    end_list = []
-    start_list = []
-    content = []
-    for seg in segments_data:
-        end=seg['end']
-        end_list.append(end)
-        start=seg['start']
-        start_list.append(start)
-        content.append(seg)
+    jsonl_items = []
+    for idx, (seg_list, msg_list) in enumerate(zip(segments_data, messages)):
+        print(seg_list)
+        print(msg_list)
+        utt_name = f"clip_{idx}"
+        
+        end_list = []
+        start_list = []
+        content = []
+        for seg in seg_list:
+            end=seg['end']
+            end_list.append(end)
+            start=seg['start']
+            start_list.append(start)
+            content.append(seg)
 
-    max_end=max(end_list)
-    min_start=min(start_list)
+        refer_audio=""
+        text=msg_list[-1]["text"]
+        clue=msg_list[-1]["clue"]
+        for msg in msg_list:
+            if msg["refer_audio"] is not None:
+                refer_audio=msg["refer_audio"]
+                break
+        if idx==0:
+            start= max(0.0, float(start_list[0]) - 0.1)
+        else:
+            start=float(start_list[0])
+        if idx==len(segments_data)-1:
+            end = min(float(end_list[-1]) + 0.1, video_duration)       
+        else:
+            end = float(end_list[-1])   
+        # max_end=round(min(max(end_list)+ 0.1, video_duration), 2)
+        # min_start=round(max(min(start_list) - 0.1, 0.0), 2)
 
-    #start, end = max(0.0, float(min_start) - 0.1), min(float(max_end) + 0.1, video_duration)
-    duration = max_end - min_start
+        #start, end = max(0.0, float(min_start) - 0.1), min(float(max_end) + 0.1, video_duration)
+        duration =  end - start
 
-    video_clip, audio_clip = clip_video_segment(
-        video_path, min_start, max_end, 
-        work_dir, utt_name
-    )
+        video_clip, audio_clip = clip_video_segment(
+            video_path, start, end, 
+            work_dir, utt_name
+        )
 
-    
-    pkl_path = os.path.join(work_dir, f"{utt_name}.pkl")
-    
-    extract_visual_embeddings(
-        frontend,
-        vad_list = [[0.0, duration]],
-        video_path = video_clip, 
-        wav_path = audio_clip, 
-        pkl_path = pkl_path
-    )
-    
-    ref_audio_path = audio_clip
-    if  os.path.exists(refer_audio):
-        src = refer_audio
-        dst = os.path.join(work_dir, f"{utt_name}_ref.wav")
-        shutil.copy(src, dst)
-        ref_audio_path = dst
-    
-    item = {
-        "messages": [
-            {"role": "text", "content": text},
-            {"role": "vocal", "content": ref_audio_path},
-            {"role": "video", "content": video_clip},
-            {"role": "face", "content": pkl_path},
-            {"role": "dialogue", "content": content},
-            {"role": "clue", "content": clue}
-        ],
-        "utt": utt_name,
-        "type": video_type,
-        "speech_length": int(duration * fps),
-        "start": start,
-        "end": end
-    }
-    #sonl_items.append(item)
+        pkl_path = os.path.join(work_dir, f"{utt_name}.pkl")
+        
+        extract_visual_embeddings(
+            frontend,
+            vad_list = [[0.0, duration]],
+            video_path = video_clip, 
+            wav_path = audio_clip, 
+            pkl_path = pkl_path
+        )
+        
+        ref_audio_path = audio_clip
+        if  os.path.exists(refer_audio):
+            src = refer_audio
+            dst = os.path.join(work_dir, f"{utt_name}_ref.wav")
+            shutil.copy(src, dst)
+            ref_audio_path = dst
+
+        
+        item = {
+            "messages": [
+                {"role": "text", "content": text},
+                {"role": "vocal", "content": ref_audio_path},
+                {"role": "video", "content": video_clip},
+                {"role": "face", "content": pkl_path},
+                {"role": "dialogue", "content": content},
+                {"role": "clue", "content": clue}
+            ],
+            "utt": utt_name,
+            "type": video_type,
+            "speech_length": int(duration * fps),
+            "start": start,
+            "end": end,
+        }
+        jsonl_items.append(item)
     
     jsonl_path = os.path.join(work_dir, "input_data.jsonl")
     with open(jsonl_path, 'w', encoding='utf-8') as f:
-        #for item in jsonl_items:
-        f.write(json.dumps(item, ensure_ascii=False) + '\n')
+        for item in jsonl_items:
+            f.write(json.dumps(item, ensure_ascii=False) + '\n')
     
-    return jsonl_path, item
+    return jsonl_path, jsonl_items
 
 def validate_timestamps(start, end, video_duration):
     """验证时间戳合法性"""

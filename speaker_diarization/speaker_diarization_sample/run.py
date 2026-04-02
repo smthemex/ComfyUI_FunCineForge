@@ -101,7 +101,7 @@ class GlobalModels:
         start_time = time.time()
         
         # 1. Pyannote Segmentation
-        print("[INFO] Loading segmentation model (overlap detection)...")
+        #print("[INFO] Loading segmentation model (overlap detection)...")
         # self.audio_models["segmentation"] = PA_Model.from_pretrained(
         #     "pyannote/segmentation-3.0", use_auth_token=self.hf_token
         # ).to(self.device)
@@ -109,7 +109,7 @@ class GlobalModels:
             self.hf_token).to(self.device)
 
         # 2. VAD: ModelScope FSMN-VAD
-        print("[INFO] Loading VAD model...")
+        #print("[INFO] Loading VAD model...")
         vad_model_path = os.path.join(self.pretrained_dir,"speech_fsmn_vad") # self.pretrained_dir / "speech_fsmn_vad"
         self.audio_models["vad_pipeline"] = pipeline(
             task=Tasks.voice_activity_detection,
@@ -118,7 +118,7 @@ class GlobalModels:
         )
 
         # 3. Speaker Embedding: CAMPPlus
-        print("[INFO] Loading CAMPPlus speaker embedding model...")
+        #print("[INFO] Loading CAMPPlus speaker embedding model...")
         feature_extractor = build('feature_extractor', self.conf)
         embedding_model = build('embedding_model', self.conf)
 
@@ -219,65 +219,65 @@ def extract_audio_from_video(video_path: str, wav_path: str, sample_rate: int = 
     audio.export(wav_path, format="wav")
 
 
-def detect_overlap(wav_path: str, threshold: float = 0.5) -> bool:
-    """Detect speaker overlap using preloaded segmentation model."""
-    print("[INFO] Running overlap detection...")
-    model = model_pool.get_segmentation_model()
-    device = model_pool.device
+# def detect_overlap(wav_path: str, threshold: float = 0.5) -> bool:
+#     """Detect speaker overlap using preloaded segmentation model."""
+#     print("[INFO] Running overlap detection...")
+#     model = model_pool.get_segmentation_model()
+#     device = model_pool.device
 
-    inference = Inference(
-        model,
-        duration=model.specifications.duration,
-        step=0.1 * model.specifications.duration,
-        skip_aggregation=True,
-        batch_size=model_pool.batch_size,
-        device=device,
-    )
-    try:
-        segmentations = inference({"audio": Path(wav_path)})
-        frame_windows = inference.model.receptive_field
+#     inference = Inference(
+#         model,
+#         duration=model.specifications.duration,
+#         step=0.1 * model.specifications.duration,
+#         skip_aggregation=True,
+#         batch_size=model_pool.batch_size,
+#         device=device,
+#     )
+#     try:
+#         segmentations = inference({"audio": Path(wav_path)})
+#         frame_windows = inference.model.receptive_field
 
-        # Aggregate and count active speakers
-        count_feat = Inference.aggregate(
-            np.sum(segmentations, axis=-1, keepdims=True),
-            frame_windows,
-            hamming=False,
-            missing=0.0,
-            skip_average=False,
-        )
-        count_feat.data = np.rint(count_feat.data).astype(np.uint8)
-        count_data = count_feat.data.squeeze()
-        sliding_window = count_feat.sliding_window
-        total_overlap_duration = 0.0
-        current_start = None
-        for i, val in enumerate(count_data):
-            timestamp = sliding_window[i].start
-            if val >= 2:
-                if current_start is None:
-                    current_start = timestamp
-            else:
-                if current_start is not None:
-                    current_end = timestamp
-                    duration = current_end - current_start
-                    if duration >= threshold:
-                        total_overlap_duration += duration
-                    current_start = None
+#         # Aggregate and count active speakers
+#         count_feat = Inference.aggregate(
+#             np.sum(segmentations, axis=-1, keepdims=True),
+#             frame_windows,
+#             hamming=False,
+#             missing=0.0,
+#             skip_average=False,
+#         )
+#         count_feat.data = np.rint(count_feat.data).astype(np.uint8)
+#         count_data = count_feat.data.squeeze()
+#         sliding_window = count_feat.sliding_window
+#         total_overlap_duration = 0.0
+#         current_start = None
+#         for i, val in enumerate(count_data):
+#             timestamp = sliding_window[i].start
+#             if val >= 2:
+#                 if current_start is None:
+#                     current_start = timestamp
+#             else:
+#                 if current_start is not None:
+#                     current_end = timestamp
+#                     duration = current_end - current_start
+#                     if duration >= threshold:
+#                         total_overlap_duration += duration
+#                     current_start = None
 
-        if current_start is not None:
-            current_end = sliding_window[-1].end
-            duration = current_end - current_start
-            if duration >= threshold:
-                total_overlap_duration += duration
-        has_overlap = total_overlap_duration > 0
-        return has_overlap
+#         if current_start is not None:
+#             current_end = sliding_window[-1].end
+#             duration = current_end - current_start
+#             if duration >= threshold:
+#                 total_overlap_duration += duration
+#         has_overlap = total_overlap_duration > 0
+#         return has_overlap
 
-    finally:
-        del inference
-        if segmentations is not None:
-            del segmentations
-        gc.collect()
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
+#     finally:
+#         del inference
+#         if segmentations is not None:
+#             del segmentations
+#         gc.collect()
+#         if torch.cuda.is_available():
+#             torch.cuda.empty_cache()
 
 
 def run_vad(wav_path: str, out_file: str):
@@ -562,10 +562,10 @@ def main(args):
     extract_audio_from_video(video_path, wav_path)
 
     # 2. Overlap detection
-    if detect_overlap(str(wav_path), threshold=1.0):
-        print("[WARNING] Speaker overlap detected. Skipping this video.")
-        os.remove(wav_path)
-        return
+    # if detect_overlap(str(wav_path), threshold=1.0):
+    #     print("[WARNING] Speaker overlap detected. Skipping this video.")
+    #     os.remove(wav_path)
+    #     return
     
     # 3. VAD
     vad_data = run_vad(str(wav_path), str(vad_json))

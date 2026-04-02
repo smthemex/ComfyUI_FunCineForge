@@ -1,32 +1,9 @@
 {
   "id": "9193b1b5-47b0-41b2-8aac-4e6a1f97908b",
   "revision": 0,
-  "last_node_id": 32,
-  "last_link_id": 51,
+  "last_node_id": 41,
+  "last_link_id": 72,
   "nodes": [
-    {
-      "id": 22,
-      "type": "Note",
-      "pos": [
-        21595.079623380072,
-        -1027.2217544178438
-      ],
-      "size": [
-        315.43557318389867,
-        98.13816492072681
-      ],
-      "flags": {},
-      "order": 0,
-      "mode": 0,
-      "inputs": [],
-      "outputs": [],
-      "properties": {},
-      "widgets_values": [
-        "参考音频可选，不输入时，用源视频的声音"
-      ],
-      "color": "#432",
-      "bgcolor": "#653"
-    },
     {
       "id": 13,
       "type": "FunCineForge_SM_Model",
@@ -39,7 +16,7 @@
         130
       ],
       "flags": {},
-      "order": 1,
+      "order": 0,
       "mode": 0,
       "inputs": [],
       "outputs": [
@@ -62,77 +39,6 @@
       ]
     },
     {
-      "id": 30,
-      "type": "FunCineForge_SM_Segments",
-      "pos": [
-        21261.65472915547,
-        -1235.29418660574
-      ],
-      "size": [
-        292.8443359375,
-        154
-      ],
-      "flags": {},
-      "order": 5,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "conds",
-          "shape": 7,
-          "type": "CONDITIONING",
-          "link": 43
-        }
-      ],
-      "outputs": [
-        {
-          "name": "conds",
-          "type": "CONDITIONING",
-          "links": [
-            44
-          ]
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "FunCineForge_SM_Segments"
-      },
-      "widgets_values": [
-        0,
-        8,
-        "青年",
-        "女",
-        1
-      ]
-    },
-    {
-      "id": 18,
-      "type": "SaveVideo",
-      "pos": [
-        23391.654219258246,
-        -1474.1085978771546
-      ],
-      "size": [
-        637.2188520259333,
-        1283.5234456296434
-      ],
-      "flags": {},
-      "order": 13,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "video",
-          "type": "VIDEO",
-          "link": 18
-        }
-      ],
-      "outputs": [],
-      "properties": {},
-      "widgets_values": [
-        "video/ComfyUI_f",
-        "auto",
-        "auto"
-      ]
-    },
-    {
       "id": 16,
       "type": "GetVideoComponents",
       "pos": [
@@ -144,7 +50,7 @@
         66
       ],
       "flags": {},
-      "order": 8,
+      "order": 9,
       "mode": 0,
       "inputs": [
         {
@@ -191,7 +97,7 @@
         78
       ],
       "flags": {},
-      "order": 12,
+      "order": 14,
       "mode": 0,
       "inputs": [
         {
@@ -231,118 +137,76 @@
       ]
     },
     {
-      "id": 14,
-      "type": "PreviewAny",
+      "id": 39,
+      "type": "FunCineForge_SM_Predata",
       "pos": [
-        21952.109330719763,
-        -1100.1910745374387
+        22117.04392624348,
+        -1455.616993144302
       ],
       "size": [
-        681.377590201595,
-        684.5340975282571
+        278.140234375,
+        170
       ],
       "flags": {},
       "order": 10,
       "mode": 0,
       "inputs": [
         {
-          "name": "source",
-          "type": "*",
-          "link": 12
-        }
-      ],
-      "outputs": [],
-      "properties": {
-        "Node name for S&R": "PreviewAny"
-      },
-      "widgets_values": [
-        null,
-        null,
-        null
-      ]
-    },
-    {
-      "id": 29,
-      "type": "FunCineForge_SM_Segments",
-      "pos": [
-        21255.305113999046,
-        -1738.9040504954353
-      ],
-      "size": [
-        292.8443359375,
-        154
-      ],
-      "flags": {},
-      "order": 2,
-      "mode": 4,
-      "inputs": [
+          "name": "videos",
+          "type": "VIDEO",
+          "link": 69
+        },
         {
           "name": "conds",
-          "shape": 7,
           "type": "CONDITIONING",
+          "link": 72
+        },
+        {
+          "name": "refer_audio",
+          "shape": 7,
+          "type": "AUDIO",
           "link": null
         }
       ],
       "outputs": [
         {
-          "name": "conds",
+          "name": "conditioning",
           "type": "CONDITIONING",
           "links": [
-            43
+            67
+          ]
+        },
+        {
+          "name": "full_report",
+          "type": "STRING",
+          "links": [
+            70
           ]
         }
       ],
       "properties": {
-        "Node name for S&R": "FunCineForge_SM_Segments"
+        "Node name for S&R": "FunCineForge_SM_Predata"
       },
       "widgets_values": [
-        0,
-        3,
-        "青年",
-        "女",
-        1
-      ]
-    },
-    {
-      "id": 15,
-      "type": "SaveAudio",
-      "pos": [
-        22980.480235655315,
-        -995.9597345344473
-      ],
-      "size": [
-        284.46467098725407,
-        233.66073009370803
-      ],
-      "flags": {},
-      "order": 11,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "audio",
-          "type": "AUDIO",
-          "link": 13
-        }
-      ],
-      "outputs": [],
-      "properties": {},
-      "widgets_values": [
-        "audio/ComfyUI"
+        "对话",
+        "auto",
+        "auto",
+        "video/ComfyUI"
       ]
     },
     {
       "id": 32,
       "type": "CreateVideo",
       "pos": [
-        21277.64349034114,
-        -1879.5176171539724
+        21765.296611806116,
+        -1694.037872140649
       ],
       "size": [
         270,
         78
       ],
       "flags": {},
-      "order": 6,
+      "order": 8,
       "mode": 0,
       "inputs": [
         {
@@ -362,8 +226,8 @@
           "name": "VIDEO",
           "type": "VIDEO",
           "links": [
-            49,
-            50
+            50,
+            69
           ]
         }
       ],
@@ -375,18 +239,293 @@
       ]
     },
     {
-      "id": 31,
-      "type": "VHS_LoadVideoFFmpeg",
+      "id": 12,
+      "type": "FunCineForge_SM_KSampler",
       "pos": [
-        20834.55971436443,
-        -1895.7738065495905
+        22743.936858530073,
+        -1301.078793791016
       ],
       "size": [
-        319.2939453125,
-        861.0510245741012
+        428.70517476856037,
+        126
+      ],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 10
+        },
+        {
+          "name": "conditioning",
+          "shape": 7,
+          "type": "CONDITIONING",
+          "link": 67
+        }
+      ],
+      "outputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "links": [
+            13,
+            16
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "FunCineForge_SM_KSampler"
+      },
+      "widgets_values": [
+        "F:/ComfyUI311/ComfyUI/output/video/ComfyUI_00001_",
+        113678975,
+        "randomize"
+      ]
+    },
+    {
+      "id": 19,
+      "type": "LoadAudio",
+      "pos": [
+        20875.10861808208,
+        -590.6897204796204
+      ],
+      "size": [
+        270,
+        136
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 4,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "AUDIO",
+          "type": "AUDIO",
+          "links": []
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadAudio"
+      },
+      "widgets_values": [
+        "example.wav",
+        null,
+        null
+      ]
+    },
+    {
+      "id": 40,
+      "type": "FunCineForge_SM_Segments",
+      "pos": [
+        20754.165172954126,
+        -1270.2040156285775
+      ],
+      "size": [
+        400,
+        282
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "conds",
+          "shape": 7,
+          "type": "CONDITIONING",
+          "link": null
+        },
+        {
+          "name": "refer_audio",
+          "shape": 7,
+          "type": "AUDIO",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "conds",
+          "type": "CONDITIONING",
+          "links": [
+            71
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "FunCineForge_SM_Segments"
+      },
+      "widgets_values": [
+        "我听说现实中的男主是渣渣男，女主苦恋精神分裂了，才会画出跟现实刚好相反的情节。",
+        "一位女性讲述一个关于小说情节与现实反差的故事，略含讽刺。",
+        0,
+        7,
+        "青年",
+        "女",
+        1
+      ]
+    },
+    {
+      "id": 41,
+      "type": "FunCineForge_SM_Segments",
+      "pos": [
+        20755.205733797393,
+        -941.9193719205699
+      ],
+      "size": [
+        402.0506545860262,
+        282
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "conds",
+          "shape": 7,
+          "type": "CONDITIONING",
+          "link": 71
+        },
+        {
+          "name": "refer_audio",
+          "shape": 7,
+          "type": "AUDIO",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "conds",
+          "type": "CONDITIONING",
+          "links": [
+            72
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "FunCineForge_SM_Segments"
+      },
+      "widgets_values": [
+        "所以，挖坑不填。",
+        "男性简短地补充了结论，声音低沉，带有无奈。整体展现出对现实与虚构之间矛盾的批判性反思。",
+        7.96,
+        10,
+        "青年",
+        "男",
+        2
+      ]
+    },
+    {
+      "id": 37,
+      "type": "FunCineForge_SM_Segments",
+      "pos": [
+        21283.241591008613,
+        -1431.4853581717905
+      ],
+      "size": [
+        400,
+        282
       ],
       "flags": {},
       "order": 3,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "conds",
+          "shape": 7,
+          "type": "CONDITIONING",
+          "link": null
+        },
+        {
+          "name": "refer_audio",
+          "shape": 7,
+          "type": "AUDIO",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "conds",
+          "type": "CONDITIONING",
+          "links": [
+            64
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "FunCineForge_SM_Segments"
+      },
+      "widgets_values": [
+        "二十一是薛妹妹的生日，你说该怎么个办法？",
+        "女性说话人以柔和的语调询问如何为薛妹妹庆生，表达出寻求建议的情绪。",
+        0,
+        3.3,
+        "青年",
+        "女",
+        1
+      ]
+    },
+    {
+      "id": 38,
+      "type": "FunCineForge_SM_Segments",
+      "pos": [
+        21279.5246185351,
+        -1077.1879952887032
+      ],
+      "size": [
+        402.0506545860262,
+        282
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "conds",
+          "shape": 7,
+          "type": "CONDITIONING",
+          "link": 64
+        },
+        {
+          "name": "refer_audio",
+          "shape": 7,
+          "type": "AUDIO",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "conds",
+          "type": "CONDITIONING",
+          "links": []
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "FunCineForge_SM_Segments"
+      },
+      "widgets_values": [
+        "往年怎么给林妹妹办的，今年也照样给薛妹妹办，不就是了.",
+        "男性说话人以沉稳果断的语气给出解决方案，情感上较为平稳，带有反问的肯定意味。整体对话情感从询问到给出建议。",
+        4.51,
+        9.4,
+        "青年",
+        "男",
+        2
+      ]
+    },
+    {
+      "id": 31,
+      "type": "VHS_LoadVideoFFmpeg",
+      "pos": [
+        20846.58898143141,
+        -1816.3178703432525
+      ],
+      "size": [
+        319.2939453125,
+        468.1651599080268
+      ],
+      "flags": {},
+      "order": 4,
       "mode": 0,
       "inputs": [
         {
@@ -432,7 +571,7 @@
         "Node name for S&R": "VHS_LoadVideoFFmpeg"
       },
       "widgets_values": {
-        "video": "b7f50b6808c76ace7046627adbfd4860.mp4",
+        "video": "92740f356feb8bf54e63257c6f4643e3.mp4",
         "force_rate": 25,
         "custom_width": 0,
         "custom_height": 0,
@@ -443,7 +582,7 @@
           "hidden": false,
           "paused": false,
           "params": {
-            "filename": "b7f50b6808c76ace7046627adbfd4860.mp4",
+            "filename": "92740f356feb8bf54e63257c6f4643e3.mp4",
             "type": "input",
             "format": "video/mp4",
             "force_rate": 25,
@@ -456,142 +595,113 @@
       }
     },
     {
-      "id": 12,
-      "type": "FunCineForge_SM_KSampler",
+      "id": 14,
+      "type": "PreviewAny",
       "pos": [
-        22668.882355008398,
-        -1250.5876239761021
+        21734.57137065608,
+        -1234.1085694701117
       ],
       "size": [
-        428.70517476856037,
-        126
+        881.9803354624892,
+        845.6796772024315
       ],
       "flags": {},
-      "order": 9,
+      "order": 12,
       "mode": 0,
       "inputs": [
         {
-          "name": "model",
-          "type": "MODEL",
-          "link": 10
-        },
-        {
-          "name": "conditioning",
-          "shape": 7,
-          "type": "CONDITIONING",
-          "link": 11
+          "name": "source",
+          "type": "*",
+          "link": 70
         }
       ],
-      "outputs": [
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "PreviewAny"
+      },
+      "widgets_values": [
+        null,
+        null,
+        null
+      ]
+    },
+    {
+      "id": 22,
+      "type": "Note",
+      "pos": [
+        21254.434330491684,
+        -741.3733229814324
+      ],
+      "size": [
+        453.3186684327666,
+        106.61141528115684
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {},
+      "widgets_values": [
+        "参考音频可选，不输入时，用源视频的声音,单个片段的语音不能少于2秒，否则会出现停顿"
+      ],
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 15,
+      "type": "SaveAudio",
+      "pos": [
+        22795.846111182367,
+        -998.9618688656807
+      ],
+      "size": [
+        284.46467098725407,
+        233.66073009370803
+      ],
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "inputs": [
         {
           "name": "audio",
           "type": "AUDIO",
-          "links": [
-            13,
-            16
-          ]
+          "link": 13
         }
       ],
-      "properties": {
-        "Node name for S&R": "FunCineForge_SM_KSampler"
-      },
+      "outputs": [],
+      "properties": {},
       "widgets_values": [
-        "F:/ComfyUI311/ComfyUI/output/video/ComfyUI_00021_",
-        1076860027,
-        "randomize"
+        "audio/ComfyUI"
       ]
     },
     {
-      "id": 9,
-      "type": "FunCineForge_SM_Predata",
+      "id": 18,
+      "type": "SaveVideo",
       "pos": [
-        22038.074716988544,
-        -1484.1053948244125
+        23201.33843367071,
+        -1280.2504339218174
       ],
       "size": [
-        440.3118837257774,
-        278
+        741.2188520259333,
+        687.9378018436064
       ],
       "flags": {},
-      "order": 7,
+      "order": 15,
       "mode": 0,
       "inputs": [
         {
-          "name": "videos",
+          "name": "video",
           "type": "VIDEO",
-          "link": 49
-        },
-        {
-          "name": "conds",
-          "type": "CONDITIONING",
-          "link": 44
-        },
-        {
-          "name": "refer_audio",
-          "shape": 7,
-          "type": "AUDIO",
-          "link": 51
+          "link": 18
         }
       ],
-      "outputs": [
-        {
-          "name": "conditioning",
-          "type": "CONDITIONING",
-          "links": [
-            11
-          ]
-        },
-        {
-          "name": "full_report",
-          "type": "STRING",
-          "links": [
-            12
-          ]
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "FunCineForge_SM_Predata"
-      },
+      "outputs": [],
+      "properties": {},
       "widgets_values": [
-        "三十年前的母带受潮太严重了，高频几乎全毁。听到了吗？这就是当年真正的天下第一剑。",
-        "第一位女性说话人以急速的语调述说当初母受潮的问题",
-        "独白",
+        "video/ComfyUI_f",
         "auto",
-        "auto",
-        "video/ComfyUI"
-      ]
-    },
-    {
-      "id": 19,
-      "type": "LoadAudio",
-      "pos": [
-        21632.27022731117,
-        -1224.8180307646835
-      ],
-      "size": [
-        270,
-        136
-      ],
-      "flags": {},
-      "order": 4,
-      "mode": 0,
-      "inputs": [],
-      "outputs": [
-        {
-          "name": "AUDIO",
-          "type": "AUDIO",
-          "links": [
-            51
-          ]
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "LoadAudio"
-      },
-      "widgets_values": [
-        "example.wav",
-        null,
-        null
+        "auto"
       ]
     }
   ],
@@ -603,22 +713,6 @@
       12,
       0,
       "MODEL"
-    ],
-    [
-      11,
-      9,
-      0,
-      12,
-      1,
-      "CONDITIONING"
-    ],
-    [
-      12,
-      9,
-      1,
-      14,
-      0,
-      "STRING"
     ],
     [
       13,
@@ -651,22 +745,6 @@
       18,
       0,
       "VIDEO"
-    ],
-    [
-      43,
-      29,
-      0,
-      30,
-      0,
-      "CONDITIONING"
-    ],
-    [
-      44,
-      30,
-      0,
-      9,
-      1,
-      "CONDITIONING"
     ],
     [
       46,
@@ -693,14 +771,6 @@
       "AUDIO"
     ],
     [
-      49,
-      32,
-      0,
-      9,
-      0,
-      "VIDEO"
-    ],
-    [
       50,
       32,
       0,
@@ -709,12 +779,52 @@
       "VIDEO"
     ],
     [
-      51,
-      19,
+      64,
+      37,
       0,
-      9,
-      2,
-      "AUDIO"
+      38,
+      0,
+      "CONDITIONING"
+    ],
+    [
+      67,
+      39,
+      0,
+      12,
+      1,
+      "CONDITIONING"
+    ],
+    [
+      69,
+      32,
+      0,
+      39,
+      0,
+      "VIDEO"
+    ],
+    [
+      70,
+      39,
+      1,
+      14,
+      0,
+      "STRING"
+    ],
+    [
+      71,
+      40,
+      0,
+      41,
+      0,
+      "CONDITIONING"
+    ],
+    [
+      72,
+      41,
+      0,
+      39,
+      1,
+      "CONDITIONING"
     ]
   ],
   "groups": [
@@ -748,10 +858,10 @@
   "config": {},
   "extra": {
     "ds": {
-      "scale": 0.5488392825486107,
+      "scale": 0.5329460341903384,
       "offset": [
-        -20730.61470643266,
-        2185.8954059265243
+        -20460.247091304664,
+        1974.2911148297148
       ]
     },
     "frontendVersion": "1.41.21",

@@ -3,6 +3,7 @@
 
 Update
 -----
+* 修复双人对话口音不对齐问题，调整双人对话的推理逻辑，以demo的代码为基础，切分片段，而非infer里的单jsonl 推理全部，按理demo是对的，因为参考音频可以区分男女； 
 
 *  修复音频口型不对齐的问题，注意输入视频必须是25帧
   
@@ -41,6 +42,7 @@ pip install -r requirements.txt
 
 4 Example
 -----
+![](https://github.com/smthemex/ComfyUI\_FunCineForge/blob/main/example\_workflows/example2.png)
 ![](https://github.com/smthemex/ComfyUI\_FunCineForge/blob/main/example\_workflows/example.png)
 
 5 Citation
