@@ -68,37 +68,51 @@ class FunCineForge_SM_Segments(io.ComfyNode):
             display_name="FunCineForge_SM_Segments",
             category="FunCineForge",
             inputs=[
+                io.String.Input("text",default="大王若是圣明，自然知道我张仪就是掉了脑袋，也不会把秦国的土地轻易交给楚国。",multiline=True),  
+                io.String.Input("clue",default="一位中年男性角色向大王陈述立场，语气沉稳且坚定，言辞间流露出对自身忠诚的强烈自信与决心。整体情感线索是忠贞不渝的承诺和不容置疑的信念。",multiline=True), 
                 io.Float.Input("start_time", default=0, min=0, max=nodes.MAX_RESOLUTION,step=0.01,display_mode=io.NumberDisplay.number),
                 io.Float.Input("end_time", default=6.22, min=0, max=nodes.MAX_RESOLUTION,step=0.01,display_mode=io.NumberDisplay.number),
                 io.Combo.Input("age_input",default="中年",options=["儿童", "青年", "中年", "中老年", "老年", "不确定"]),
                 io.Combo.Input("gender_input",default="男",options=["男", "女", "不确定"]),
                 io.Combo.Input("spk",default=1,options=[1,2,3,4,5,6,7,8,9,10]),
                 io.Conditioning.Input("conds",optional=True),
+                io.Audio.Input("refer_audio", optional=True),
             ],
             outputs=[
                 io.Conditioning.Output(display_name="conds")
                 ],
             )
     @classmethod
-    def execute(cls,start_time,end_time,age_input,gender_input,spk,conds=None) -> io.NodeOutput:
+    def execute(cls,text,clue,start_time,end_time,age_input,gender_input,spk,conds=None,refer_audio=None) -> io.NodeOutput:
         clear_comfyui_cache()
+        if refer_audio is not None:
+            refer_audio=audio2path(refer_audio)
         segments={
         "start": start_time,
         "end": end_time,
         "age": age_input,
         "gender": gender_input,
-        "spk": spk,
+        "spk": str(spk),
             }
-        
+        message = {
+            "text":text,
+            "clue":clue,
+            "spk": str(spk),
+            "refer_audio": refer_audio,
+        }
         if conds is not  None :
             if conds.get("conds",None) is not None:
                 segment_c=conds["conds"]
                 segment_c.append(segments)
+                messages=conds["messages"]
+                messages.append(message)
             else:
                 segment_c=[segments]
+                messages=[message]
         else:
             segment_c=[segments]
-        output={"conds":segment_c,}
+            messages=[message]
+        output={"conds":segment_c,"messages":messages}
         return io.NodeOutput(output)
       
 class FunCineForge_SM_Predata(io.ComfyNode):
@@ -111,13 +125,10 @@ class FunCineForge_SM_Predata(io.ComfyNode):
             inputs=[
                 io.Video.Input("videos"),
                 io.Conditioning.Input("conds"),
-                io.String.Input("text",default="大王若是圣明，自然知道我张仪就是掉了脑袋，也不会把秦国的土地轻易交给楚国。",multiline=True),  
-                io.String.Input("clue",default="一位中年男性角色向大王陈述立场，语气沉稳且坚定，言辞间流露出对自身忠诚的强烈自信与决心。整体情感线索是忠贞不渝的承诺和不容置疑的信念。",multiline=True), 
                 io.Combo.Input("video_type",default="独白",options=["独白", "旁白", "对话", "多人", ]),
                 io.Combo.Input("format", options=Types.VideoContainer.as_input(), default="auto", tooltip="The format to save the video as."),
                 io.Combo.Input("codec", options=Types.VideoCodec.as_input(), default="auto", tooltip="The codec to use for the video."),
                 io.String.Input("filename_prefix", default="video/ComfyUI", tooltip="The prefix for the file to save. This may include formatting information such as %date:yyyy-MM-dd% or %Empty Latent Image.width% to include values from nodes."),
-                io.Audio.Input("refer_audio", optional=True),
             ],
             outputs=[
                 io.Conditioning.Output(display_name="conditioning"),
@@ -125,19 +136,19 @@ class FunCineForge_SM_Predata(io.ComfyNode):
                 ],
             )
     @classmethod
-    def execute(cls,videos,conds,text,clue,video_type,format,codec,filename_prefix,refer_audio=None) -> io.NodeOutput:
+    def execute(cls,videos,conds,video_type,format,codec,filename_prefix) -> io.NodeOutput:
         conds_datas=conds["conds"]
+        messages=conds["messages"]
         fps=videos.get_components().frame_rate
-        ref_audio=refer_audio if refer_audio is not None else videos.get_components().audio
-        ref_audio_path = audio2path(ref_audio)
+
         clear_comfyui_cache()
         video_path,video_dir= re_save_video(videos,codec,filename_prefix,format)
         jsonl_path,jsonl_items,full_report=pre_data_simple(
             video_path, os.path.join(node_cr_path,"speaker_diarization/speaker_diarization_sample/config/diar.yaml"), 
             weigths_funcineforge_current_path, video_dir, device,
-            os.path.join(node_cr_path,"speaker_diarization/speaker_diarization_sample/config/decode.yaml"), conds_datas,video_type,ref_audio_path,text,clue,fps,
+            os.path.join(node_cr_path,"speaker_diarization/speaker_diarization_sample/config/decode.yaml"), conds_datas,video_type,messages,fps,
             )
-        conditioning=[jsonl_path,[jsonl_items],video_path,video_dir]
+        conditioning=[jsonl_path,jsonl_items,video_path,video_dir]
         #full_report = "\n".join(full_report)
         return io.NodeOutput(conditioning,full_report)
     

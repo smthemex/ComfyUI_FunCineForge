@@ -329,77 +329,133 @@ import torch
 from .funcineforge.auto.auto_frontend import AutoFrontend
 from .speaker_diarization.speaker_diarization_sample.run import GlobalModels
 from .funcineforge.datasets import FunCineForgeDS
-# snapshot_download(
-#     repo_id="FunAudioLLM/Fun-CineForge",
-#     revision='v1.0.0',
-#     local_dir='pretrained_models',
-#     ignore_patterns=[
-#         "*.md", 
-#         ".git*", 
-#         "funcineforge_zh_en/llm/config.yaml"
-#     ],
-#     repo_type="model",
-# )
 
-
-# ==================== 配置区域 ====================
-# DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
-# # DEVICE = "cpu"
-# SERVER_PORT = 7860  # 如果 7860 被占用，改为 7861
-# TEMP_DIR = "temp_workdir"
-# CONFIG_FRONTEND = "decode_conf/diar.yaml"
-# CONFIG_MODEL = "decode_conf/decode.yaml"
-# PRETRAIN = "pretrained_models"
-# MAX_SEGMENTS = 3
-# DEFAULT_VIDEO_PATH="data/sample.mp4"
-# DEFAULT_AUDIO_PATH="data/ref.wav"
-# DEFAULT_TEXT = "我军无粮，利在急战。今乘魏兵新败，不敢出兵，出其不意，乘机退去，方可平安无事。"
-# DEFAULT_CLUE = "一位中年男性以沉稳但略带担忧的语调，分析我军无粮急战的困境与敌军心败状态。他随即提出一种撤退方案，整体流露出对战局的担忧和谋求生路。"
-# 全局模型实例（延迟加载）
 model_pool: typing.Optional[GlobalModels] = None
 engine = None
 
+def get_segments_data_split_continuous(segments, video_duration):
+    """
+    按连续相同的spk值对segments进行分组
+    
+    Args:
+        segments: 包含多个字典的列表，每个字典都有'spk'键
+        video_duration: 视频时长
+        
+    Returns:
+        groups: 包含多个列表的列表，每个内部列表包含连续相同spk的字典
+    """
+    if not segments:
+        return []
+    
+    groups = []
+    current_group = []
+    current_spk = None
+    
+    for i, seg in enumerate(segments):
+        # 计算duration并更新字典
+        if i == 0:
+            start= max(0.0, float(seg['start']) - 0.1)
+        else:
+            start =float(seg['start'])
+        if i == len(segments)-1:
+            end = min(float(seg['end']) + 0.1, video_duration)
+        else:
+            end = float(seg['end'])
+        duration = end - start
+        seg["duration"] = round(duration, 2)
+        
+        seg_spk = seg['spk']
+        
+        # 如果当前字典的spk与前一个不同，则开始新组
+        if seg_spk != current_spk:
+            # 如果当前组不为空，先保存前一个组
+            if current_group:
+                groups.append(current_group)
+            
+            # 开始新组
+            current_group = [seg]
+            current_spk = seg_spk
+        else:
+            # 否则继续添加到当前组
+            current_group.append(seg)
+    
+    # 添加最后一个组
+    if current_group:
+        groups.append(current_group)
+    
+    # 打印分组信息
+    for i, group in enumerate(groups):
+        if group:
+            print(f"Group {i+1} assigned to speaker: {group[0]['spk']} (contains {len(group)} items)")
+    
+    return groups
+
+def get_messages_data_split_continuous(messages):
+    """
+    按连续相同的spk值对messages进行分组
+    
+    Args:
+        messages: 包含多个字典的列表，每个字典都有'spk'键
+        
+    Returns:
+        groups: 包含多个列表的列表，每个内部列表包含连续相同spk的字典
+    """
+    if not messages:
+        return []
+    
+    groups = []
+    current_group = []
+    current_spk = None
+    
+    for seg in messages:
+
+        seg_spk = seg['spk']
+        
+        # 如果当前字典的spk与前一个不同，则开始新组
+        if seg_spk != current_spk:
+            # 如果当前组不为空，先保存前一个组
+            if current_group:
+                groups.append(current_group)
+            
+            # 开始新组
+            current_group = [seg]
+            current_spk = seg_spk
+        else:
+            # 否则继续添加到当前组
+            current_group.append(seg)
+    
+    # 添加最后一个组
+    if current_group:
+        groups.append(current_group)
+    
+    # 打印分组信息
+    for i, group in enumerate(groups):
+        if group:
+            print(f"Group {i+1} assigned to speaker: {group[0]['spk']} (contains {len(group)} items)")
+
+    return groups
+
+            
+
 def get_segments_data(segments,video_duration):
 
-    # segments={
-    #     "start": start_time,
-    #     "end": end_time,
-    #     "age": age_input,
-    #     "gender": gender_input,
-    #     "spk": spk,
-    #         }
-    # start, end = max(0.0, float(seg['start']) - 0.1), min(float(seg['end']) + 0.1, video_duration)
-    # duration = end - start
-
-    #  {"role": "dialogue", "content": [{
-    #                 "start": 0.0,
-    #                 "duration": round(duration, 2),
-    #                 "spk": f"{spk}",
-    #                 "gender": seg['gender'],
-    #                 "age": seg['age']
-    #             }]},
     segment_inputs = []
-    for seg in segments:
-        start, end = max(0.0, float(seg['start']) - 0.1), min(float(seg['end']) + 0.1, video_duration)
+    for i, seg in enumerate(segments):
+        if i == 0:
+            start= max(0.0, float(seg['start']) - 0.1)
+        else:
+            start =float(seg['start'])
+        if i == len(segments)-1:
+            end = min(float(seg['end']) + 0.1, video_duration)
+        else:
+            end = float(seg['end'])
         duration = end - start
-        seg["duration"]=duration
+        seg["duration"]=round(duration, 2)
         segment_inputs.append(seg)
 
-    # segment_inputs = []
-    # for seg in segments:
-    #     segment_inputs.extend([
-    #         seg["text"],
-    #         seg["clue"],
-    #         seg["start"],
-    #         seg["end"],
-    #         seg["age"],
-    #         seg["gender"],
-    #         seg["audio"],
-    #         seg["enable"]
-    #     ])
     return segment_inputs
 
-def pre_data_simple(video_path, conf_file, pretrained_models_dir, work_dir, device,config_path,segments,video_type,refer_audio,text,clue,fps):
+def pre_data_simple(video_path, conf_file, pretrained_models_dir, work_dir, device,config_path,segments,video_type,messages,fps):
     
 
     video_duration,error = get_video_duration(video_path)
@@ -409,55 +465,16 @@ def pre_data_simple(video_path, conf_file, pretrained_models_dir, work_dir, devi
         return None,None, "❌ 无法获取视频时长，请检查视频文件"
     #video_duration_list.append(video_duration)
     simple_main_infer(video_path, work_dir, conf_file, pretrained_models_dir,device=device)
-    segment_inputs=get_segments_data(segments,video_duration) #dialogue #content
-    #print(segment_inputs)
-    # data = {
-    #         "text": str(text).strip(),
-    #         "clue": str(clue) if clue else "",
-    #         "start": float(start) if start else 0.0,
-    #         "end": float(end) if end else 0.0,
-    #         "age": str(age) if age else "不确定",
-    #         "gender": str(gender) if gender else "不确定",
-    #         "ref_audio": str(refer_audio) if refer_audio else ""
-    #     }
+    #segment_inputs=get_segments_data(segments,video_duration) #dialogue #content
+    segment_inputs=get_segments_data_split_continuous(segments,video_duration) #[[{spk1}], [{spk2}],[{spk1}]..]
+    print(segment_inputs)
+    message_inputs=get_messages_data_split_continuous(messages)
+    print(message_inputs)
 
-    # segments_data = []
-    # for i in range(len(segments)):
-    #     base_idx = i * 8
-    #     enable = segment_inputs[base_idx + 7]  # enable_check
-    #     if not enable:
-    #         continue
-    
-    #     text = segment_inputs[base_idx + 0]
-    #     if not text or not text.strip():
-    #         continue
-        
-    #     clue = segment_inputs[base_idx + 1]
-    #     start = segment_inputs[base_idx + 2]
-    #     end = segment_inputs[base_idx + 3]
-    #     age = segment_inputs[base_idx + 4]
-    #     gender = segment_inputs[base_idx + 5]
-    #     ref_audio = segment_inputs[base_idx + 6]
-        
-    #     errors = validate_timestamps(start, end, video_duration)
-    #     if errors:
-    #         return None,None, f"❌ 片段 {i+1} 时间戳错误：\n" + "\n".join(errors)
-        
-    #     data = {
-    #         "text": str(text).strip(),
-    #         "clue": str(clue) if clue else "",
-    #         "start": float(start) if start else 0.0,
-    #         "end": float(end) if end else 0.0,
-    #         "age": str(age) if age else "不确定",
-    #         "gender": str(gender) if gender else "不确定",
-    #         "ref_audio": str(ref_audio) if ref_audio else ""
-    #     }
-        
-    #     segments_data.append(data)
     frontend=init_frontend_models(config_path,pretrained_models_dir,device)
 
     #for video_path,work_dir,video_type,spk in zip(video_path_list,work_dir_list,video_type_list,spk_list):
-    jsonl_path, jsonl_items=generate_jsonl_data(frontend, video_path, segment_inputs, work_dir, video_duration,refer_audio,text,clue,video_type,fps)
+    jsonl_path, jsonl_items=generate_jsonl_data(frontend, video_path, segment_inputs, work_dir, video_duration,message_inputs,video_type,fps)
 
     full_report="got error"
     if jsonl_items:
@@ -578,158 +595,3 @@ def funcineforge_infer(eng, conds, cfg):
         else: 
             return None, f"⚠️ 模型推理失败。错误：{str(e)}"
 
-def process_dubbing(video_file, *segment_inputs,):
-    """主推理流程"""
-        
-    if not video_file:
-        return None, "❌ 请上传视频文件"
-    
-    video_duration = get_video_duration(video_file)
-    if video_duration <= 0:
-        return None, "❌ 无法获取视频时长，请检查视频文件"
-    
-    import shutil
-    if os.path.exists(TEMP_DIR):
-        try:
-            shutil.rmtree(TEMP_DIR)
-        except Exception as e:
-            return None, f"❌ 清空临时目录失败：{e}"
-    os.makedirs(TEMP_DIR, exist_ok=True)
-    
-    # 解析 segment_inputs
-    segments_data = []
-    for i in range(MAX_SEGMENTS):
-        base_idx = i * 8
-        enable = segment_inputs[base_idx + 7]  # enable_check
-        if not enable:
-            continue
-    
-        text = segment_inputs[base_idx + 0]
-        if not text or not text.strip():
-            continue
-        
-        clue = segment_inputs[base_idx + 1]
-        start = segment_inputs[base_idx + 2]
-        end = segment_inputs[base_idx + 3]
-        age = segment_inputs[base_idx + 4]
-        gender = segment_inputs[base_idx + 5]
-        ref_audio = segment_inputs[base_idx + 6]
-        
-        errors = validate_timestamps(start, end, video_duration)
-        if errors:
-            return None, f"❌ 片段 {i+1} 时间戳错误：\n" + "\n".join(errors)
-        
-        data = {
-            "text": str(text).strip(),
-            "clue": str(clue) if clue else "",
-            "start": float(start) if start else 0.0,
-            "end": float(end) if end else 0.0,
-            "age": str(age) if age else "不确定",
-            "gender": str(gender) if gender else "不确定",
-            "ref_audio": str(ref_audio) if ref_audio else ""
-        }
-        
-        segments_data.append(data)
-    
-    if not segments_data:
-        return None, "❌ 有效片段数据为空，请启用并填写至少一个片段"
-    
-    try:
-        print(0.1, desc="📋 预处理视频，生成 JSONL 数据...")
-        frontend = init_frontend_models()
-        jsonl_path, jsonl_items = generate_jsonl_data(frontend, video_file, segments_data, TEMP_DIR, video_duration)
-        if jsonl_items:
-            report_lines = []
-            report_lines.append(f"✅ 任务完成！共生成 **{len(jsonl_items)}** 个片段数据。\n")
-            report_lines.append("📄 **详细 JSONL 数据预览：**")
-            report_lines.append("=" * 40)
-            for idx, item in enumerate(jsonl_items):
-                item_json = json.dumps(item, ensure_ascii=False, indent=2)
-                report_lines.append(f"\n--- 🎬 片段 #{idx + 1} ---")
-                report_lines.append(item_json)
-                report_lines.append("-" * 40)
-            full_report = "\n".join(report_lines)
-        
-        print(0.3, desc="🔄 FunCineForge 模型加载中...")
-
-        eng = init_engine()
-        if eng and jsonl_items:
-            try:
-                print(0.5, desc="🚀 FunCineForge 模型推理中...")
-                eng.inference(jsonl_path)
-                
-                print(0.8, desc="🎵 正在将配音语音粘贴回静音视频...")
-
-                output_wav_dir = os.path.join(TEMP_DIR, "wav")
-                final_video_path = os.path.join(TEMP_DIR, "dubbed_video.mp4")
-                
-                if not os.path.exists(output_wav_dir):
-                    return None, f"⚠️ 未找到音频输出目录：{output_wav_dir}"
-                
-                wav_files = sorted([f for f in os.listdir(output_wav_dir) if f.endswith('.wav')])
-                if not wav_files:
-                    return None, f"⚠️ 未生成任何音频文件：{output_wav_dir}"
-                
-                time_mapping = {}
-                for i, item in enumerate(jsonl_items):
-                    matched_file = None
-                    for wf in wav_files:
-                        if wf.startswith(item['utt']):
-                            matched_file = wf
-                            break
-                    if matched_file:
-                        start_time = float(item['start'])
-                        time_mapping[matched_file] = start_time
-                    
-                    
-                original_clip = VideoFileClip(video_file)
-                video_duration = original_clip.duration
-                video_only = original_clip.without_audio()
-                audio_clips = []
-                for wav_file, start_time in time_mapping.items():
-                    wav_path = os.path.join(output_wav_dir, wav_file)
-                    audio_clip = AudioFileClip(wav_path)
-                    audio_clip = audio_clip.with_start(start_time)
-                    audio_clips.append(audio_clip)
-                    
-                final_audio = CompositeAudioClip(audio_clips)
-                if final_audio.duration < video_duration:
-                    final_audio = final_audio.with_duration(video_duration)
-                final_clip = video_only.with_audio(final_audio)
-                final_clip.write_videofile(
-                    final_video_path,
-                    codec='libx264',
-                    audio_codec='aac',
-                    fps=original_clip.fps,
-                    logger=None
-                )
-                original_clip.close()
-                video_only.close()
-                for ac in audio_clips:
-                    ac.close()
-                if 'final_audio' in locals():
-                    final_audio.close()
-                final_clip.close()
-                
-                print(1.0, desc="✅ 配音完成")
-                return final_video_path, full_report
-            except Exception as e:
-                import traceback
-                traceback.print_exc()
-                if "index out of range" in str(e):
-                    return None, f"⚠️ 模型推理失败。错误：{str(e)}，建议补齐输入的线索描述和说话人属性"
-                else: 
-                    return None, f"⚠️ 模型推理失败。错误：{str(e)}"
-        else:
-            time.sleep(1)
-            print(1.0, desc="模拟完成")
-            return video_file, full_report
-
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        return None, f"❌ 发生错误：{str(e)}"
-    finally:
-        # 生产环境开启清理
-        # shutil.rmtree(work_dir)
-        pass
